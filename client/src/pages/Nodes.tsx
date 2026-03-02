@@ -62,13 +62,16 @@ export default function Nodes() {
         header: 'Data Space',
         cell: ({ row }) => {
           const n = row.original;
-          if (!n.dataSpaceBytes || n.role === 'director') {
+          if (n.role === 'director' || (!n.dataSpaceBytes && !n.dataSpaceTotalBytes)) {
             return <span className="text-muted-foreground">{'\u2014'}</span>;
           }
-          const pct = n.dataSpaceTotalBytes ? (n.dataSpaceBytes / n.dataSpaceTotalBytes) * 100 : 0;
+          if (!n.dataSpaceBytes && n.dataSpaceTotalBytes) {
+            return <span className="text-sm">{formatBytes(n.dataSpaceTotalBytes)} total</span>;
+          }
+          const pct = n.dataSpaceTotalBytes ? (n.dataSpaceBytes! / n.dataSpaceTotalBytes) * 100 : 0;
           return (
             <div className="flex items-center gap-2">
-              <span className="text-sm">{formatBytes(n.dataSpaceBytes)}</span>
+              <span className="text-sm">{formatBytes(n.dataSpaceBytes!)}</span>
               <div className="h-1.5 w-16 rounded-full bg-vdura-surface-raised">
                 <div
                   className="h-full rounded-full bg-vdura-amber"

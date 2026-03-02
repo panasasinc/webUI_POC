@@ -171,6 +171,7 @@ export function nameToId(prefix: string, name: string): string {
  */
 export function mapNodeStatus(status: string): 'online' | 'offline' | 'service' {
   const s = status.toLowerCase().trim();
+  if (s.includes('warning') || s.includes('degraded')) return 'service';
   if (s.startsWith('online') || s === 'up' || s === 'ok' || s === 'active') return 'online';
   if (s === 'service' || s === 'maintenance') return 'service';
   return 'offline';

@@ -55,7 +55,9 @@ export function parseSysmapNodes(raw: string): SystemNode[] {
       if (!name) continue;
 
       const typeStr = line.substring(typeStart, bsStart).trim();
-      const bladeset = line.substring(bsStart, capStart).trim();
+      const bladesetRaw = line.substring(bsStart, capStart).trim();
+      // Strip trailing numeric fragments that bleed from the Capacity column
+      const bladeset = bladesetRaw.replace(/\s+\d[\d.]*$/, '').trim();
       const serial = serialStart > 0 ? line.substring(serialStart, ipStart > 0 ? ipStart : line.length).trim() : '';
       const ipAddress = ipStart > 0 ? line.substring(ipStart, stateStart > 0 ? stateStart : line.length).trim() : '';
       const state = stateStart > 0 ? line.substring(stateStart).trim() : 'online';
@@ -69,6 +71,7 @@ export function parseSysmapNodes(raw: string): SystemNode[] {
       const node: SystemNode = {
         id: nameToId('node', name),
         name,
+        model: typeStr || undefined,
         status: mapNodeStatus(state),
         serialNumber: serialClean,
         firmwareVersion: '',
