@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router';
+import { useLocation, Link } from 'react-router';
 import { AlertTriangle, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useAlerts } from '@/hooks/useAlerts';
 import { useSystem } from '@/hooks/useSystem';
@@ -9,6 +9,8 @@ const routeLabels: Record<string, string> = {
   '/volumes': 'File System > Volumes',
   '/pools': 'File System > Storage Pools',
   '/nodes': 'Cluster & Nodes > Realm Nodes',
+  '/hosts': 'Storage Connectivity > Hosts',
+  '/alerts': 'Monitoring > Alerts',
   '/help': 'Get Help',
   '/about': 'About Product',
 };
@@ -40,10 +42,10 @@ export function Header() {
       </div>
       <div className="flex items-center gap-5">
         {activeCount > 0 && (
-          <div className="flex items-center gap-1.5 text-vdura-amber">
+          <Link to="/alerts" className="flex items-center gap-1.5 text-vdura-amber hover:text-vdura-amber-light">
             <AlertTriangle className="h-4 w-4" />
             <span className="text-sm font-medium">{activeCount}</span>
-          </div>
+          </Link>
         )}
         <span className="text-sm text-muted-foreground">{realmName}</span>
         <div className="flex items-center gap-1 text-sm text-foreground">

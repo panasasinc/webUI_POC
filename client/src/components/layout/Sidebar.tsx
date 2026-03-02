@@ -1,12 +1,14 @@
 import { NavLink } from 'react-router';
 import {
-  BarChart3, HardDrive, Network, HelpCircle, Lock,
+  BarChart3, HardDrive, Bell, Network, Monitor, HelpCircle, Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { to: '/', icon: BarChart3, label: 'Dashboards' },
   { to: '/volumes', icon: HardDrive, label: 'File System' },
+  { to: '/hosts', icon: Monitor, label: 'Hosts' },
+  { to: '/alerts', icon: Bell, label: 'Alerts' },
   { to: '/nodes', icon: Network, label: 'Realm Nodes' },
 ];
 
