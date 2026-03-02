@@ -170,36 +170,12 @@ export function buildSeed(): SimulatorSeed {
 
   // 6 hosts
   const hosts: Host[] = [
-    {
-      id: 'host-001', name: 'esxi-prod-01', status: 'online', type: 'fc',
-      wwpns: ['50:01:43:80:02:5B:C1:00', '50:01:43:80:02:5B:C1:01'], iscsiNames: [],
-      mappedVolumes: ['vol-001', 'vol-002'], portCount: 2,
-    },
-    {
-      id: 'host-002', name: 'esxi-prod-02', status: 'online', type: 'fc',
-      wwpns: ['50:01:43:80:02:5B:C2:00', '50:01:43:80:02:5B:C2:01'], iscsiNames: [],
-      mappedVolumes: ['vol-001', 'vol-005'], portCount: 2,
-    },
-    {
-      id: 'host-003', name: 'linux-app-01', status: 'online', type: 'iscsi',
-      wwpns: [], iscsiNames: ['iqn.2025-01.com.vdura:linux-app-01'],
-      mappedVolumes: ['vol-004', 'vol-008'], portCount: 2,
-    },
-    {
-      id: 'host-004', name: 'win-sql-01', status: 'online', type: 'iscsi',
-      wwpns: [], iscsiNames: ['iqn.2025-01.com.vdura:win-sql-01'],
-      mappedVolumes: ['vol-009'], portCount: 1,
-    },
-    {
-      id: 'host-005', name: 'esxi-dev-01', status: 'degraded', type: 'fc',
-      wwpns: ['50:01:43:80:02:5B:D1:00'], iscsiNames: [],
-      mappedVolumes: ['vol-010', 'vol-016'], portCount: 1,
-    },
-    {
-      id: 'host-006', name: 'backup-srv-01', status: 'offline', type: 'iscsi',
-      wwpns: [], iscsiNames: ['iqn.2025-01.com.vdura:backup-srv-01'],
-      mappedVolumes: ['vol-011', 'vol-012', 'vol-013'], portCount: 2,
-    },
+    { id: 'host-001', name: 'esxi-prod-01', ipAddress: '10.10.1.20', status: 'online' },
+    { id: 'host-002', name: 'esxi-prod-02', ipAddress: '10.10.1.21', status: 'online' },
+    { id: 'host-003', name: 'linux-app-01', ipAddress: '10.10.2.30', status: 'online' },
+    { id: 'host-004', name: 'win-sql-01', ipAddress: '10.10.2.31', status: 'online' },
+    { id: 'host-005', name: 'esxi-dev-01', ipAddress: '10.10.1.22', status: 'degraded' },
+    { id: 'host-006', name: 'backup-srv-01', ipAddress: '10.10.3.10', status: 'offline' },
   ];
 
   // 8 alerts

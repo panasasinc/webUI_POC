@@ -24,44 +24,11 @@ export default function Hosts() {
         filterFn: 'includesString',
       },
       {
-        accessorKey: 'type',
-        header: 'Type',
-        cell: ({ row }) => {
-          const t = row.original.type;
-          return (
-            <span className="inline-flex items-center rounded-full bg-vdura-surface-raised px-2 py-0.5 text-xs font-medium">
-              {t === 'fc' ? 'FC' : 'iSCSI'}
-            </span>
-          );
-        },
-        filterFn: 'equalsString',
-      },
-      {
-        accessorKey: 'portCount',
-        header: 'Ports',
-        cell: ({ row }) => <span>{row.original.portCount}</span>,
-      },
-      {
-        id: 'identifiers',
-        header: 'WWPNs / iSCSI Names',
-        cell: ({ row }) => {
-          const h = row.original;
-          const values = h.type === 'fc' ? h.wwpns : h.iscsiNames;
-          if (!values.length) return <span className="text-muted-foreground">{'\u2014'}</span>;
-          return (
-            <div className="flex flex-col gap-0.5">
-              {values.map((v) => (
-                <span key={v} className="font-mono text-xs">{v}</span>
-              ))}
-            </div>
-          );
-        },
-      },
-      {
-        id: 'mappedVolumeCount',
-        header: 'Mapped Volumes',
-        accessorFn: (row) => row.mappedVolumes.length,
-        cell: ({ row }) => <span>{row.original.mappedVolumes.length}</span>,
+        accessorKey: 'ipAddress',
+        header: 'IP Address',
+        cell: ({ row }) => (
+          <span className="font-mono text-sm text-muted-foreground">{row.original.ipAddress}</span>
+        ),
       },
       {
         accessorKey: 'status',
@@ -82,14 +49,6 @@ export default function Hosts() {
           { value: 'online', label: 'Good' },
           { value: 'degraded', label: 'Warning' },
           { value: 'offline', label: 'Offline' },
-        ],
-      },
-      {
-        columnId: 'type',
-        label: 'Type',
-        options: [
-          { value: 'fc', label: 'FC' },
-          { value: 'iscsi', label: 'iSCSI' },
         ],
       },
     ],
