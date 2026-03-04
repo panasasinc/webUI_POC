@@ -30,6 +30,8 @@ interface DataTableProps<TData> {
   filters?: FilterOption[];
   /** Render a group header row before certain data rows */
   groupHeader?: (row: TData, index: number) => React.ReactNode | null;
+  /** Initial sorting state so the table starts pre-sorted with a visible indicator */
+  initialSorting?: SortingState;
 }
 
 export function DataTable<TData>({
@@ -39,8 +41,9 @@ export function DataTable<TData>({
   searchPlaceholder = 'Search...',
   filters = [],
   groupHeader,
+  initialSorting,
 }: DataTableProps<TData>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [showSearch, setShowSearch] = useState(false);
