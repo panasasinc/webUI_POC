@@ -33,7 +33,11 @@ export default function Volumes() {
       {
         accessorKey: 'name',
         header: 'Component',
-        cell: ({ row }) => <span className="font-medium">/{row.original.name}</span>,
+        cell: ({ row }) => (
+          <Link to={`/volumes/${row.original.id}`} className="font-medium text-vdura-amber hover:underline">
+            /{row.original.name}
+          </Link>
+        ),
         filterFn: 'includesString',
       },
       {

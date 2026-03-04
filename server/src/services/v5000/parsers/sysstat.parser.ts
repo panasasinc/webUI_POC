@@ -14,7 +14,7 @@ import { safeFloat } from './column-parser.js';
 export function parseSysstatStorage(raw: string): PerformanceDataPoint {
   const lines = raw.split('\n');
 
-  // Look for the "Total" summary row (last data row, starts with spaces)
+  // Look for the "Total" summary row (last data row containing "Total")
   let totalLine = '';
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/Total/i.test(lines[i]) && /\d/.test(lines[i])) {
@@ -23,32 +23,33 @@ export function parseSysstatStorage(raw: string): PerformanceDataPoint {
     }
   }
 
-  // If no total line, try to use the last data row
-  if (!totalLine) {
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const trimmed = lines[i].trim();
-      if (trimmed && /^VCH-/.test(trimmed)) {
-        totalLine = lines[i];
-        break;
-      }
+  if (totalLine) {
+    // Strip the set-name prefix (e.g. `"Set 1" Total`) to avoid capturing
+    // digits from the set identifier. Everything after "Total" is numeric data.
+    const afterTotal = totalLine.replace(/^.*Total\s+/i, '');
+    return buildStoragePoint(afterTotal);
+  }
+
+  // Fallback: use the last VCH data row
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const trimmed = lines[i].trim();
+    if (trimmed && /^VCH-/.test(trimmed)) {
+      // Strip node name (VCH-4,2) and IP address before extracting numbers
+      const afterIP = trimmed.replace(/^VCH-\S+\s+\d+\.\d+\.\d+\.\d+\s+/, '');
+      return buildStoragePoint(afterIP);
     }
   }
 
-  if (!totalLine) {
+  return emptyStoragePoint();
+}
+
+function buildStoragePoint(numericPart: string): PerformanceDataPoint {
+  const numbers = numericPart.match(/[\d.]+/g);
+  if (!numbers || numbers.length < 6) {
     return emptyStoragePoint();
   }
 
-  // Parse the total line by splitting on whitespace
-  // Format: [pad] "Set 1" Total  CPU  Disk  Op/s  Resp  Write  Read  Total  Used  Avail  Rsvd
-  // We need to find the numeric values
-  const numbers = totalLine.match(/[\d.]+/g);
-  if (!numbers || numbers.length < 8) {
-    return emptyStoragePoint();
-  }
-
-  // The numbers in order: CPU%, Disk%, Op/s, Resp(msec), Write(KB/s), Read(KB/s), Total(GB), Used(GB), Avail(GB), Rsvd(GB)
-  const cpuPct = safeFloat(numbers[0]);
-  const diskPct = safeFloat(numbers[1]);
+  // Numbers in order: CPU%, Disk%, Op/s, Resp(msec), Write(KB/s), Read(KB/s), ...capacity columns
   const opsPerSec = safeFloat(numbers[2]);
   const respMs = safeFloat(numbers[3]);
   const writeKBs = safeFloat(numbers[4]);
@@ -107,10 +108,8 @@ export function parseSysstatDirector(raw: string): MetadataDataPoint {
 
   return {
     timestamp: new Date().toISOString(),
-    creates: totalDfOps, // DF operations as proxy for metadata
-    removes: 0,
-    lookups: totalNfsOps,
-    setMix: 0,
+    dfOps: totalDfOps,
+    nfsOps: totalNfsOps,
   };
 }
 

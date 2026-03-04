@@ -15,9 +15,11 @@ function randomWalk(prev: number, stepSize: number, min: number, max: number, me
 export class PerformanceEngine {
   private storageHistory: PerformanceDataPoint[] = [];
   private metadataHistory: MetadataDataPoint[] = [];
+  private lastTickTime = 0;
 
   constructor() {
     this.seedHistory();
+    this.lastTickTime = Date.now();
   }
 
   private seedHistory(): void {
@@ -30,10 +32,8 @@ export class PerformanceEngine {
     let writeTP = 200;
     let readLat = 0.4;
     let writeLat = 0.7;
-    let creates = 1200;
-    let removes = 800;
-    let lookups = 5000;
-    let setMix = 2200;
+    let dfOps = 1200;
+    let nfsOps = 5000;
 
     for (let i = MAX_HISTORY - 1; i >= 0; i--) {
       const ts = new Date(now - i * intervalMs).toISOString();
@@ -55,22 +55,27 @@ export class PerformanceEngine {
         writeLatencyMs: parseFloat(writeLat.toFixed(2)),
       });
 
-      creates = randomWalk(creates, 150, 400, 3000, 1200);
-      removes = randomWalk(removes, 100, 200, 2000, 800);
-      lookups = randomWalk(lookups, 500, 2000, 12000, 5000);
-      setMix = randomWalk(setMix, 200, 800, 5000, 2200);
+      dfOps = randomWalk(dfOps, 150, 400, 3000, 1200);
+      nfsOps = randomWalk(nfsOps, 500, 2000, 12000, 5000);
 
       this.metadataHistory.push({
         timestamp: ts,
-        creates: Math.round(creates),
-        removes: Math.round(removes),
-        lookups: Math.round(lookups),
-        setMix: Math.round(setMix),
+        dfOps: Math.round(dfOps),
+        nfsOps: Math.round(nfsOps),
       });
     }
   }
 
+  /** Generate a new data point if at least `minIntervalMs` has elapsed since the last tick. */
+  tickIfStale(minIntervalMs: number): boolean {
+    const now = Date.now();
+    if (now - this.lastTickTime < minIntervalMs) return false;
+    this.tick();
+    return true;
+  }
+
   tick(): void {
+    this.lastTickTime = Date.now();
     const now = new Date().toISOString();
     const prevS = this.storageHistory[this.storageHistory.length - 1];
     const prevM = this.metadataHistory[this.metadataHistory.length - 1];
@@ -87,10 +92,8 @@ export class PerformanceEngine {
 
     this.metadataHistory.push({
       timestamp: now,
-      creates: Math.round(randomWalk(prevM.creates, 150, 400, 3000, 1200)),
-      removes: Math.round(randomWalk(prevM.removes, 100, 200, 2000, 800)),
-      lookups: Math.round(randomWalk(prevM.lookups, 500, 2000, 12000, 5000)),
-      setMix: Math.round(randomWalk(prevM.setMix, 200, 800, 5000, 2200)),
+      dfOps: Math.round(randomWalk(prevM.dfOps, 150, 400, 3000, 1200)),
+      nfsOps: Math.round(randomWalk(prevM.nfsOps, 500, 2000, 12000, 5000)),
     });
 
     // Trim to window

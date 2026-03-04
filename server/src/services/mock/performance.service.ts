@@ -20,7 +20,7 @@ function generateHistory(hours: number): PerformanceDataPoint[] {
 }
 
 export class MockPerformanceService implements IPerformanceService {
-  async getSummary(): Promise<PerformanceSummary> {
+  async getSummary(_intervalMs?: number): Promise<PerformanceSummary> {
     const history = generateHistory(24);
     const latest = history[history.length - 1];
     return {

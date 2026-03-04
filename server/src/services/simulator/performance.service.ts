@@ -5,7 +5,10 @@ import type { SimulatorSystem } from './SimulatorSystem.js';
 export class SimulatorPerformanceService implements IPerformanceService {
   constructor(private sim: SimulatorSystem) {}
 
-  async getSummary(): Promise<PerformanceSummary> {
+  async getSummary(intervalMs?: number): Promise<PerformanceSummary> {
+    if (intervalMs) {
+      this.sim.perfEngine.tickIfStale(intervalMs);
+    }
     const latest = this.sim.perfEngine.getLatestStorage();
     return {
       currentIOPS: latest.readIOPS + latest.writeIOPS,

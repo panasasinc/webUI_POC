@@ -4,6 +4,7 @@ import { AppShell } from '@/components/layout/AppShell';
 
 const Dashboard = lazy(() => import('@/pages/Dashboard'));
 const Volumes = lazy(() => import('@/pages/Volumes'));
+const VolumeDetail = lazy(() => import('@/pages/VolumeDetail'));
 const Pools = lazy(() => import('@/pages/Pools'));
 const Nodes = lazy(() => import('@/pages/Nodes'));
 const Hosts = lazy(() => import('@/pages/Hosts'));
@@ -17,6 +18,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
         <Route path="volumes" element={<Volumes />} />
+        <Route path="volumes/:id" element={<VolumeDetail />} />
         <Route path="pools" element={<Pools />} />
         <Route path="nodes" element={<Nodes />} />
         <Route path="hosts" element={<Hosts />} />

@@ -47,7 +47,10 @@ export const api = {
       fetchApi<Alert>(`${API_ROUTES.ALERTS}/${id}/acknowledge`, { method: 'POST' }),
   },
   performance: {
-    summary: () => fetchApi<PerformanceSummary>(API_ROUTES.PERFORMANCE),
+    summary: (intervalMs?: number) => {
+      const qs = intervalMs ? `?interval=${intervalMs}` : '';
+      return fetchApi<PerformanceSummary>(`${API_ROUTES.PERFORMANCE}${qs}`);
+    },
   },
   system: {
     info: () => fetchApi<SystemInfo>(API_ROUTES.SYSTEM),

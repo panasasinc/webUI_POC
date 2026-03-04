@@ -15,6 +15,11 @@ export interface Volume {
   createdAt: string;
   reductionRatio?: number;
   raidLevel?: string;
+  description?: string;
+  softQuotaBytes?: number;
+  hardQuotaBytes?: number;
+  recoveryPriority?: 'high' | 'average' | 'low';
+  availabilityMode?: string;
 }
 
 export interface CreateVolumeRequest {

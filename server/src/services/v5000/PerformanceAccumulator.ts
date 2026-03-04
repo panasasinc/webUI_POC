@@ -10,6 +10,8 @@ export class PerformanceAccumulator {
   private timer: ReturnType<typeof setInterval> | null = null;
   private ssh: SshClient;
   private pollMs: number;
+  private lastPollTime = 0;
+  private polling: Promise<void> | null = null;
 
   constructor(ssh: SshClient, pollMs: number) {
     this.ssh = ssh;
@@ -41,7 +43,15 @@ export class PerformanceAccumulator {
     return this.storageHistory[this.storageHistory.length - 1];
   }
 
+  /** Poll on demand if at least `minIntervalMs` has elapsed since the last poll. */
+  async pollIfStale(minIntervalMs: number): Promise<void> {
+    if (Date.now() - this.lastPollTime < minIntervalMs) return;
+    if (this.polling) return this.polling;
+    await this.poll();
+  }
+
   private async poll(): Promise<void> {
+    this.lastPollTime = Date.now();
     try {
       const [storageResult, directorResult] = await Promise.all([
         this.ssh.execute('sysstat storage'),

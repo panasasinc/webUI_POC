@@ -10,10 +10,8 @@ export interface PerformanceDataPoint {
 
 export interface MetadataDataPoint {
   timestamp: string;
-  creates: number;
-  removes: number;
-  lookups: number;
-  setMix: number;
+  dfOps: number;
+  nfsOps: number;
 }
 
 export interface PerformanceSummary {

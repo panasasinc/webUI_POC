@@ -26,7 +26,7 @@ export interface IAlertService {
 }
 
 export interface IPerformanceService {
-  getSummary(): Promise<PerformanceSummary>;
+  getSummary(intervalMs?: number): Promise<PerformanceSummary>;
 }
 
 export interface ISystemService {

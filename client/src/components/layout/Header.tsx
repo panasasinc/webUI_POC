@@ -27,7 +27,8 @@ export function Header() {
     return () => clearInterval(interval);
   }, []);
 
-  const breadcrumb = routeLabels[location.pathname] ?? 'Dashboards';
+  const breadcrumb = routeLabels[location.pathname]
+    ?? (location.pathname.startsWith('/volumes/') ? 'File System > Volume Details' : 'Dashboards');
   const realmName = system?.clusterName ?? 'vdura-realm';
 
   return (

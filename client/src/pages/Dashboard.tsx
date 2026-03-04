@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useSystem } from '@/hooks/useSystem';
 import { useVolumes } from '@/hooks/useVolumes';
@@ -5,21 +6,31 @@ import { usePools } from '@/hooks/usePools';
 import { useAlerts } from '@/hooks/useAlerts';
 import { usePerformance } from '@/hooks/usePerformance';
 import { CapacityBar } from '@/components/common/CapacityBar';
+import { PerformanceChart, type ChartSeries } from '@/components/common/PerformanceChart';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { PageLoading } from '@/components/common/PageLoading';
 import { ErrorMessage } from '@/components/common/ErrorMessage';
 import { formatBytes, formatNumber } from '@/lib/utils';
 import { CheckCircle, AlertTriangle, MinusCircle } from 'lucide-react';
-import {
-  ResponsiveContainer, AreaChart, Area,
-  XAxis, YAxis, Tooltip, CartesianGrid, Legend,
-} from 'recharts';
+import { Link } from 'react-router';
+
+const POLL_OPTIONS = [
+  { value: '1000', label: '1 sec' },
+  { value: '5000', label: '5 sec' },
+  { value: '10000', label: '10 sec' },
+  { value: '30000', label: '30 sec' },
+  { value: '60000', label: '1 min' },
+  { value: '300000', label: '5 min' },
+  { value: '900000', label: '15 min' },
+];
 
 export default function Dashboard() {
+  const [pollInterval, setPollInterval] = useState(30_000);
   const system = useSystem();
   const volumes = useVolumes();
   const pools = usePools();
   const alerts = useAlerts();
-  const perf = usePerformance();
+  const perf = usePerformance(pollInterval);
 
   if (system.isLoading || volumes.isLoading) return <PageLoading />;
   if (system.error) return <ErrorMessage message={system.error.message} onRetry={() => system.refetch()} />;
@@ -91,7 +102,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-semibold uppercase tracking-wider text-vdura-amber">
-              Alerts <span className="text-foreground">{activeAlerts.length}</span>
+              <Link to="/alerts" className="hover:underline">Alerts</Link> <span className="text-foreground">{activeAlerts.length}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -111,6 +122,11 @@ export default function Dashboard() {
                     </span>
                   </div>
                 ))}
+                {activeAlerts.length > 6 && (
+                  <Link to="/alerts" className="block text-center text-xs text-vdura-amber hover:underline">
+                    View all
+                  </Link>
+                )}
               </div>
             )}
           </CardContent>
@@ -133,116 +149,114 @@ export default function Dashboard() {
       </Card>
 
       {/* System Performance */}
-      {perfData && (
-        <Card>
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <CardTitle className="text-sm font-bold">System Performance</CardTitle>
-                <span className="rounded bg-vdura-surface-raised px-2 py-0.5 text-xs text-muted-foreground">Last 15 min</span>
-                <span className="rounded bg-vdura-surface-raised px-2 py-0.5 text-xs text-muted-foreground">Files...</span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              {/* Storage Performance */}
-              <div>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-vdura-amber">Storage Performance</p>
-                <div className="h-52">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={perfData.history}>
-                      <defs>
-                        <linearGradient id="gradBandwidth" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="gradThroughput" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="gradReadIOPS" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#d4a017" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#d4a017" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="gradWriteIOPS" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333338" />
-                      <XAxis
-                        dataKey="timestamp"
-                        tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        stroke="#555"
-                        tick={{ fill: '#888', fontSize: 10 }}
-                      />
-                      <YAxis stroke="#555" tick={{ fill: '#888', fontSize: 10 }} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#2a2a2e', border: '1px solid #333338', borderRadius: 6 }}
-                        labelFormatter={(v) => new Date(v as string).toLocaleString()}
-                        formatter={(v: number) => formatNumber(Math.round(v))}
-                      />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Area type="monotone" dataKey="readThroughputMBs" stroke="#22c55e" fill="url(#gradBandwidth)" name="Bandwidth" strokeWidth={1.5} />
-                      <Area type="monotone" dataKey="writeThroughputMBs" stroke="#ef4444" fill="url(#gradThroughput)" name="Throughput" strokeWidth={1.5} />
-                      <Area type="monotone" dataKey="readIOPS" stroke="#d4a017" fill="url(#gradReadIOPS)" name="Read IOPS" strokeWidth={1.5} />
-                      <Area type="monotone" dataKey="writeIOPS" stroke="#8b5cf6" fill="url(#gradWriteIOPS)" name="Write IOPS" strokeWidth={1.5} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Metadata Operations */}
-              <div>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-vdura-amber">Metadata Operations</p>
-                <div className="h-52">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={perfData.metadataHistory ?? perfData.history}>
-                      <defs>
-                        <linearGradient id="gradCreates" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#d4a017" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#d4a017" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="gradRemoves" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="gradLookups" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#22c55e" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="gradSetMix" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#333338" />
-                      <XAxis
-                        dataKey="timestamp"
-                        tickFormatter={(v) => new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        stroke="#555"
-                        tick={{ fill: '#888', fontSize: 10 }}
-                      />
-                      <YAxis stroke="#555" tick={{ fill: '#888', fontSize: 10 }} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#2a2a2e', border: '1px solid #333338', borderRadius: 6 }}
-                        labelFormatter={(v) => new Date(v as string).toLocaleString()}
-                        formatter={(v: number) => formatNumber(Math.round(v))}
-                      />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
-                      <Area type="monotone" dataKey="creates" stroke="#d4a017" fill="url(#gradCreates)" name="Creates" strokeWidth={1.5} />
-                      <Area type="monotone" dataKey="removes" stroke="#ef4444" fill="url(#gradRemoves)" name="Removes" strokeWidth={1.5} />
-                      <Area type="monotone" dataKey="lookups" stroke="#22c55e" fill="url(#gradLookups)" name="Lookups" strokeWidth={1.5} />
-                      <Area type="monotone" dataKey="setMix" stroke="#8b5cf6" fill="url(#gradSetMix)" name="Set Mix" strokeWidth={1.5} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {perfData && <PerformanceSection perfData={perfData} pollInterval={pollInterval} onPollIntervalChange={setPollInterval} />}
     </div>
+  );
+}
+
+/** Map poll interval → visible time window and x-axis tick format. */
+function timeWindow(intervalMs: number): { windowMs: number; format: Intl.DateTimeFormatOptions } {
+  if (intervalMs <= 1_000)   return { windowMs:  5 * 60_000, format: { minute: '2-digit', second: '2-digit' } };
+  if (intervalMs <= 5_000)   return { windowMs: 15 * 60_000, format: { minute: '2-digit', second: '2-digit' } };
+  if (intervalMs <= 10_000)  return { windowMs: 30 * 60_000, format: { hour: '2-digit', minute: '2-digit', second: '2-digit' } };
+  if (intervalMs <= 30_000)  return { windowMs:      3_600_000, format: { hour: '2-digit', minute: '2-digit' } };
+  if (intervalMs <= 60_000)  return { windowMs:  2 * 3_600_000, format: { hour: '2-digit', minute: '2-digit' } };
+  if (intervalMs <= 300_000) return { windowMs: 12 * 3_600_000, format: { hour: '2-digit', minute: '2-digit' } };
+  return                            { windowMs: 24 * 3_600_000, format: { hour: '2-digit', minute: '2-digit' } };
+}
+
+function sliceToWindow<T extends { timestamp: string }>(data: T[], windowMs: number): T[] {
+  const cutoff = new Date(Date.now() - windowMs).toISOString();
+  return data.filter((p) => p.timestamp >= cutoff);
+}
+
+function PerformanceSection({ perfData, pollInterval, onPollIntervalChange }: {
+  perfData: import('@vdura/shared').PerformanceSummary;
+  pollInterval: number;
+  onPollIntervalChange: (ms: number) => void;
+}) {
+  const { windowMs, format: timeFormat } = timeWindow(pollInterval);
+  const history = useMemo(() => sliceToWindow(perfData.history, windowMs), [perfData.history, windowMs]);
+  const metaHistory = useMemo(
+    () => sliceToWindow(perfData.metadataHistory ?? [], windowMs),
+    [perfData.metadataHistory, windowMs],
+  );
+
+  const iopsSeries: ChartSeries[] = [
+    { dataKey: 'readIOPS', name: 'Read IOPS', color: '#22c55e' },
+    { dataKey: 'writeIOPS', name: 'Write IOPS', color: '#8b5cf6' },
+  ];
+
+  const throughputSeries: ChartSeries[] = [
+    { dataKey: 'readThroughputMBs', name: 'Read MB/s', color: '#22c55e' },
+    { dataKey: 'writeThroughputMBs', name: 'Write MB/s', color: '#ef4444' },
+  ];
+
+  const latencySeries: ChartSeries[] = [
+    { dataKey: 'readLatencyMs', name: 'Read Latency', color: '#22c55e' },
+    { dataKey: 'writeLatencyMs', name: 'Write Latency', color: '#ef4444' },
+  ];
+
+  const metaSeries: ChartSeries[] = [
+    { dataKey: 'dfOps', name: 'DF Ops/s', color: '#d4a017' },
+    { dataKey: 'nfsOps', name: 'NFS Ops/s', color: '#22c55e' },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm font-bold">System Performance</CardTitle>
+          <Select value={String(pollInterval)} onValueChange={(v) => onPollIntervalChange(Number(v))}>
+            <SelectTrigger className="h-7 w-28 bg-vdura-surface text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {POLL_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <PerformanceChart
+            title="IOPS"
+            data={history}
+            series={iopsSeries}
+            valueFormatter={(v) => formatNumber(Math.round(v))}
+            timeFormat={timeFormat}
+            yAxisUnit="IOPS"
+          />
+          <PerformanceChart
+            title="Throughput"
+            data={history}
+            series={throughputSeries}
+            valueFormatter={(v) => `${v.toFixed(2)} MB/s`}
+            timeFormat={timeFormat}
+            yAxisUnit="MB/s"
+          />
+          <PerformanceChart
+            title="Latency"
+            data={history}
+            series={latencySeries}
+            valueFormatter={(v) => `${v.toFixed(2)} ms`}
+            timeFormat={timeFormat}
+            yAxisUnit="ms"
+          />
+          {metaHistory.length > 0 && metaSeries.length > 0 && (
+            <PerformanceChart
+              title="Metadata Operations"
+              data={metaHistory}
+              series={metaSeries}
+              valueFormatter={(v) => formatNumber(Math.round(v))}
+              timeFormat={timeFormat}
+              yAxisUnit="Ops/s"
+            />
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

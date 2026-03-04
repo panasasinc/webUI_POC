@@ -145,16 +145,47 @@ export function buildSeed(): SimulatorSeed {
     'degraded', 'online', 'online', 'online', 'online', 'offline',
   ];
 
+  const volumeDescriptions = [
+    'Primary production database volume for transactional workloads.',
+    'Secondary production database volume for read replicas.',
+    'Production database replica for disaster recovery.',
+    'Application data volume for the main web platform.',
+    'Application data volume for microservices layer.',
+    'Analytics data warehouse volume for BI queries.',
+    'Analytics staging volume for ETL pipelines.',
+    'Staging environment database volume.',
+    'Development environment volume for feature branches.',
+    'Development environment volume for integration testing.',
+    'Nightly backup volume for production databases.',
+    'Weekly backup volume for application data.',
+    'Monthly backup volume for compliance snapshots.',
+    'Long-term archive volume for audit data.',
+    'Archive volume for historical transaction logs.',
+    'QA and integration testing volume.',
+    'Media asset storage volume for CDN origin.',
+    'Centralized log aggregation volume.',
+    'Log retention volume for security audit trail.',
+    'Temporary scratch space for batch processing.',
+    'Compliance data volume for regulatory requirements.',
+  ];
+  const recoveryPriorities: ('high' | 'average' | 'low')[] = [
+    'high', 'high', 'high', 'average', 'average',
+    'average', 'average', 'low', 'low', 'low',
+    'low', 'low', 'low', 'low', 'low',
+    'low', 'average', 'average', 'average', 'low', 'high',
+  ];
+
   const volumes: Volume[] = volumeNames.map((name, i) => {
     const poolIdx = volumePool[i];
     const pool = pools[poolIdx];
     const capacity = (1 + Math.random() * 20) * TB;
     const usedPct = 0.3 + Math.random() * 0.5;
+    const capacityBytes = Math.round(capacity);
     return {
       id: `vol-${String(i + 1).padStart(3, '0')}`,
       name,
       status: volumeStatuses[i],
-      capacityBytes: Math.round(capacity),
+      capacityBytes,
       usedBytes: Math.round(capacity * usedPct),
       poolId: pool.id,
       poolName: pool.name,
@@ -165,6 +196,11 @@ export function buildSeed(): SimulatorSeed {
       createdAt: new Date(Date.now() - (180 - i * 8) * 86400_000).toISOString(),
       reductionRatio: parseFloat((1.5 + Math.random() * 2.5).toFixed(1)),
       raidLevel: `RAID 6+ (${pool.raidConfig ?? '8+2'})`,
+      description: volumeDescriptions[i],
+      softQuotaBytes: Math.round(capacityBytes * 0.9),
+      hardQuotaBytes: capacityBytes,
+      recoveryPriority: recoveryPriorities[i],
+      availabilityMode: recoveryPriorities[i] === 'low' ? 'Fail I/O Requests' : 'Retry I/O Requests',
     };
   });
 
